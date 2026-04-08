@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Login - Audit Sistem</title>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="../css/style.css">
+</head>
+<body>
+    <div class="web3-bg">
+        <div class="blob blob-1"></div>
+        <div class="blob blob-2"></div>
+        <div class="blob blob-3"></div>
+    </div>
+
+    <div class="login-layout">
+        <div class="glass-panel login-box">
+            <div class="login-header">
+                <img src="../../public/assets/logo-satoria.png" alt="Satoria Logo" class="login-logo" onerror="this.src='https://via.placeholder.com/200x60?text=SATORIA+LOGO'">
+                <h1 class="title">AUDIT <span class="gradient-text">SYSTEM</span></h1>
+                <p class="subtitle">Sistem Akses Terpadu</p>
+            </div>
+            
+            <form id="loginForm" class="login-form">
+                <div class="input-group">
+                    <input type="text" id="username" placeholder="Masukkan Username ID" required autocomplete="off">
+                    <div class="input-glow"></div>
+                </div>
+                <div class="input-group">
+                    <input type="password" id="password" placeholder="Masukkan Passkey" required>
+                    <div class="input-glow"></div>
+                </div>
+                <button type="submit" class="btn-web3">
+                    <span>Koneksikan Sistem</span>
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <script src="../js/api.js"></script>    
+    <script src="../js/main.js"></script>
+</body>
+</html>

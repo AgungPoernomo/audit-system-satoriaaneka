@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard - Audit Sistem</title>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="../css/style.css">
+</head>
+<body id="dashboard-app">
+    <div class="web3-bg">
+        <div class="blob blob-1"></div>
+        <div class="blob blob-2"></div>
+        <div class="blob blob-3"></div>
+    </div>
+
+        <div class="sidebar-overlay" id="sidebarOverlay"></div>
+
+    <div class="dashboard-wrapper">
+        <aside class="sidebar glass-panel" id="sidebar">
+            <div class="sidebar-top">
+                <div class="sidebar-brand">
+                    <img src="../../public/assets/logo-satoria.png" alt="Satoria Logo" class="brand-logo" onerror="this.src='https://via.placeholder.com/180x50?text=SATORIA+LOGO'">
+                    <h2>AUDIT <span class="gradient-text">SYSTEM</span></h2>
+                </div>
+
+                <nav class="sidebar-nav">
+                    <a href="#dashboard" class="nav-item active" data-title="Dashboard Utama">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"></rect><rect x="14" y="3" width="7" height="7"></rect><rect x="14" y="14" width="7" height="7"></rect><rect x="3" y="14" width="7" height="7"></rect></svg>
+                        Dashboard
+                    </a>
+                    <a href="#audit-checklist" class="nav-item" data-title="Audit Checklist">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 11 12 14 22 4"></polyline><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"></path></svg>
+                        Audit Checklist
+                    </a>
+                    <a href="#scorring" class="nav-item" data-title="Scorring (Penilaian)">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg>
+                        Scorring
+                    </a>
+                    <a href="#master-map" class="nav-item" data-title="Master Outdoor Map">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="3 6 9 3 15 6 21 3 21 18 15 21 9 18 3 21"></polygon><line x1="9" y1="3" x2="9" y2="18"></line><line x1="15" y1="6" x2="15" y2="21"></line></svg>
+                        Master Outdoor Map
+                    </a>
+                    <a href="#area-rules" class="nav-item" data-title="Area Standard Layout & Rules">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>
+                        Area Standard Layout
+                    </a>
+                </nav>
+            </div>
+
+            <div class="sidebar-bottom">
+                <div class="user-profile-sidebar">
+                    <div class="user-avatar">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--gradient-1)" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
+                    </div>
+                    <div class="user-info">
+                        <span id="userNameDisplay" class="user-name">Memuat...</span>
+                        <span id="userRoleDisplay" class="badge">...</span>
+                    </div>
+                </div>
+
+                <button id="btnLogout" class="nav-item btn-logout-sidebar">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path><polyline points="16 17 21 12 16 7"></polyline><line x1="21" y1="12" x2="9" y2="12"></line></svg>
+                    Logout
+                </button>
+            </div>
+        </aside>
+
+        <main class="main-content">
+            <header class="top-header glass-panel">
+                
+                <button class="mobile-toggle" id="mobileToggle">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="3" y1="12" x2="21" y2="12"></line><line x1="3" y1="6" x2="21" y2="6"></line><line x1="3" y1="18" x2="21" y2="18"></line></svg>
+                </button>
+
+                <div class="header-title">
+                    <h1 id="pageTitle">Dashboard Utama</h1>
+                    <p class="header-subtitle">Overview & Aktivitas Sistem</p>
+                </div>
+            </header>
+
+            <div class="content-area glass-panel">
+                <div class="content-placeholder">
+                    <div class="glow-icon">✦</div>
+                    <h2 id="contentHeading">Sistem Audit Terkoneksi</h2>
+                    <p>Sistem siap digunakan. Pilih modul di navigasi sebelah kiri untuk mengelola data perusahaan.</p>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <div class="modal-overlay" id="detailModal">
+        <div class="modal-content glass-panel">
+            <button class="btn-close-modal" id="closeModal">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+            </button>
+            <div class="modal-header">
+                <p class="modal-subtitle" id="modalAuditMeta">Tgl Audit | Auditor</p>
+                <h2 id="modalAreaName" class="gradient-text">Nama Area</h2>
+                <div class="modal-total-score">Total Skor: <span id="modalTotalScore">0</span>/100</div>
+            </div>
+            <div class="modal-body" id="modalDetails"></div>
+        </div>
+    </div>
+
+    <script src="../js/api.js"></script>
+    <script src="../js/main.js"></script>
+</body>
+</html>
