@@ -1,58 +1,55 @@
-// Ganti dengan URL Web App Anda yang sebenarnya
-const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbyPJ70WTKA0HpVUWEZu_hShWxEp_28LXp2z-IGCJKIV0qTuPUSo64eabosMCm0vj_M/exec'; 
+// ==========================================
+// 1. URL GOOGLE APPS SCRIPT (WEB APP)
+// ==========================================
+// GANTI teks di dalam tanda kutip ini dengan URL Deployment Baru Anda!
+const scriptURL = "https://script.google.com/macros/s/AKfycbw0Si5RkRYTEyZKEzzfBPfrAGQUgHWiXBIyKHN7hMTi7gARm3u41MYAZBV8uOieekkY/exec";
 
-async function loginUser(username, password) {
-    try {
-        const response = await fetch(SCRIPT_URL, {
-            method: 'POST',
-            headers: { "Content-Type": "text/plain;charset=utf-8" },
-            body: JSON.stringify({ action: "login", username: username, password: password }) // Tambah action
-        });
-        return await response.json();
-    } catch (error) {
-        return { status: 'error', message: 'Koneksi gagal.' };
-    }
-}
 
-// Fungsi baru untuk mengambil item checklist
-async function getChecklistItems() {
+// ==========================================
+// 2. FUNGSI INTI PENGIRIMAN DATA (Ini yang tadi hilang!)
+// ==========================================
+async function fetchApi(payload) {
     try {
-        const response = await fetch(SCRIPT_URL, {
+        const response = await fetch(scriptURL, {
             method: 'POST',
-            headers: { "Content-Type": "text/plain;charset=utf-8" },
-            body: JSON.stringify({ action: "getChecklist" }) // Action getChecklist
-        });
-        return await response.json();
-    } catch (error) {
-        console.error("Gagal mengambil data checklist", error);
-        return { status: 'error' };
-    }
-}
-
-async function saveAuditData(payload) {
-    try {
-        const response = await fetch(SCRIPT_URL, {
-            method: 'POST',
-            headers: { "Content-Type": "text/plain;charset=utf-8" },
             body: JSON.stringify(payload)
         });
         return await response.json();
     } catch (error) {
-        return { status: 'error' };
+        console.error('Gagal menghubungi server:', error);
+        return { status: 'error', message: error.message };
     }
 }
 
-// Fungsi mengambil data ranking dari sheet Scoring
+
+// ==========================================
+// 3. KUMPULAN RUTE API
+// ==========================================
+
+// --- Rute Auth ---
+async function loginUser(username, password) {
+    return await fetchApi({ action: 'login', username: username, password: password });
+}
+
+// --- Rute Audit Checklist ---
+async function getChecklistItems() {
+    return await fetchApi({ action: 'getChecklist' });
+}
+
+async function saveAuditData(payload) {
+    return await fetchApi(payload); // payload sudah berisi action: 'saveAudit' dari main.js
+}
+
+// --- Rute Scoring / Leaderboard ---
 async function getScoringRanking() {
-    try {
-        const response = await fetch(SCRIPT_URL, {
-            method: 'POST',
-            headers: { "Content-Type": "text/plain;charset=utf-8" },
-            body: JSON.stringify({ action: "getScoringData" })
-        });
-        return await response.json();
-    } catch (error) {
-        console.error("Gagal mengambil data scoring", error);
-        return { status: 'error' };
-    }
+    return await fetchApi({ action: 'getScoringData' });
+}
+
+// --- Rute Master Outdoor Map ---
+async function getMasterMapData() {
+    return await fetchApi({ action: 'getMasterMap' });
+}
+
+async function saveMasterMapData(payload) {
+    return await fetchApi(payload); // payload sudah berisi action: 'uploadMasterMap' dari main.js
 }

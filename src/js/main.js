@@ -95,6 +95,8 @@ document.addEventListener('DOMContentLoaded', () => {
                         <h2>Sistem Audit Terkoneksi</h2>
                         <p>Sistem siap digunakan. Pilih modul di navigasi sebelah kiri untuk mengelola data perusahaan.</p>
                     </div>`;
+            } else if (selectedTitle === "Master Outdoor Map") {
+                renderMasterMap(contentArea);   
             } else {
                 contentArea.innerHTML = `
                     <div class="content-placeholder">
@@ -103,6 +105,7 @@ document.addEventListener('DOMContentLoaded', () => {
                         <p>Modul ini sedang dalam tahap pengembangan.</p>
                     </div>`;
             }
+            
         }
 
         navItems.forEach(item => {
@@ -140,28 +143,36 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 // ==========================================
+// Helper: Konversi File ke Base64
+// ==========================================
+function fileToBase64(file) {
+    return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.readAsDataURL(file);
+        reader.onload = () => resolve({
+            base64: reader.result.split(',')[1], // Buang header data:image/jpeg;base64,
+            mimeType: file.type,
+            fileName: file.name
+        });
+        reader.onerror = error => reject(error);
+    });
+}
+
+// ==========================================
 // 3. FUNGSI RENDER FORM AUDIT CHECKLIST
 // ==========================================
 async function renderAuditForm(container, user) {
     const today = new Date().toISOString().split('T')[0];
     
-    container.innerHTML = `
-        <div class="content-placeholder">
-            <div class="glow-icon" style="animation: pulse 1s infinite">⏳</div>
-            <h2>Mengunduh Data...</h2>
-            <p>Menghubungkan ke Database.</p>
-        </div>
-    `;
+    container.innerHTML = `<div class="content-placeholder"><div class="glow-icon" style="animation: pulse 1s infinite">⏳</div><h2>Mengunduh Data...</h2></div>`;
 
     const response = await getChecklistItems();
-    
     if (response.status !== 'success') {
-        container.innerHTML = `<div class="content-placeholder"><div class="glow-icon" style="color: #EF4444;">⚠️</div><h2>Koneksi Gagal</h2><p>Gagal memuat data dari database.</p></div>`;
+        container.innerHTML = `<div class="content-placeholder"><div class="glow-icon" style="color: #EF4444;">⚠️</div><h2>Koneksi Gagal</h2></div>`;
         return;
     }
 
     const categoriesData = response.data;
-    
     const legendHtml = `
         <div class="score-legend">
             <strong>Ketentuan Skor:</strong>
@@ -189,37 +200,25 @@ async function renderAuditForm(container, user) {
         const items = categoriesData[cat] || [];
         if (items.length > 0) {
             html += `<div class="category-card"><h3 class="category-title">${cat}</h3><div class="audit-items">`;
-            
             items.forEach((item, index) => {
                 const inputName = `score_${cat}_${index}`;
                 const fileId = `photo_${cat}_${index}`;
                 
                 html += `
-                    <div class="audit-item">
+                    <div class="audit-item" data-kategori="${cat}">
                         <div class="item-content">
                             <p class="item-desc"><strong>${index + 1}. ${item.pertanyaan}</strong></p>
                             <p class="item-standard"><em>Standar: ${item.standar}</em></p>
-                            
                             <div class="evidence-upload">
-                                <input type="file" id="${fileId}" name="${fileId}" accept="image/*" capture="environment" class="file-input">
-                                <label for="${fileId}" class="btn-upload">
-                                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"></path><circle cx="12" cy="13" r="4"></circle></svg>
-                                    Ambil Foto
-                                </label>
+                                <input type="file" id="${fileId}" accept="image/*" capture="environment" class="file-input">
+                                <label for="${fileId}" class="btn-upload">Ambil Foto</label>
                                 <span class="file-name" id="name_${fileId}">Belum ada bukti</span>
                             </div>
                         </div>
-
                         <div class="scoring-group">
-                            <label class="score-radio s-0" title="Perlu Perbaikan (>3 Temuan)">
-                                <input type="radio" name="${inputName}" value="0" required> <span>0</span>
-                            </label>
-                            <label class="score-radio s-3" title="Perawatan (1 Temuan)">
-                                <input type="radio" name="${inputName}" value="3"> <span>3</span>
-                            </label>
-                            <label class="score-radio s-5" title="Excellence (0 Temuan)">
-                                <input type="radio" name="${inputName}" value="5"> <span>5</span>
-                            </label>
+                            <label class="score-radio s-0"><input type="radio" name="${inputName}" value="0" required> <span>0</span></label>
+                            <label class="score-radio s-3"><input type="radio" name="${inputName}" value="3"> <span>3</span></label>
+                            <label class="score-radio s-5"><input type="radio" name="${inputName}" value="5"> <span>5</span></label>
                         </div>
                     </div>
                 `;
@@ -228,36 +227,29 @@ async function renderAuditForm(container, user) {
         }
     });
 
-    html += `
-            </div>
-            <button type="submit" class="btn-web3 submit-audit"><span>Kirim Hasil Audit</span></button>
-        </form>
-    `;
-
+    html += `</div><button type="submit" class="btn-web3 submit-audit"><span>Kirim Hasil & Upload Foto</span></button></form>`;
     container.innerHTML = html;
 
-    // Logika UI Foto
+    // Interaksi UI Foto
     document.querySelectorAll('.file-input').forEach(input => {
         input.addEventListener('change', function(e) {
             const fileNameSpan = document.getElementById(`name_${this.id}`);
             if (this.files && this.files.length > 0) {
-                fileNameSpan.innerText = "✓ Foto terekam";
+                fileNameSpan.innerText = "✓ Foto terekam (" + Math.round(this.files[0].size/1024) + " KB)";
                 fileNameSpan.style.color = "#10B981"; 
-                fileNameSpan.style.fontWeight = "600";
             } else {
                 fileNameSpan.innerText = "Belum ada bukti";
                 fileNameSpan.style.color = "var(--text-muted)";
-                fileNameSpan.style.fontWeight = "400";
             }
         });
     });
 
-    // Logika Kumpul & Kirim Data
+    // Logika Pengiriman Data (Struktur Vertikal)
     document.getElementById('auditForm').addEventListener('submit', async function(e) {
         e.preventDefault();
         const btn = this.querySelector('.submit-audit');
         btn.disabled = true;
-        btn.querySelector('span').innerText = "Menyimpan Data...";
+        btn.querySelector('span').innerText = "Mengupload Data & Foto... Mohon Tunggu";
 
         const payload = {
             action: "saveAudit",
@@ -265,37 +257,50 @@ async function renderAuditForm(container, user) {
             namaAuditor: document.getElementById('namaAuditor').value,
             namaArea: document.getElementById('namaArea').value,
             codeArea: document.getElementById('codeArea').value,
-            total: 0
+            items: [] // Ini akan berisi array per pertanyaan
         };
 
-        const categories = ["Ringkas", "Rapi", "Resik", "Rawat", "Rajin", "Safety"];
+        const auditItemsDivs = this.querySelectorAll('.audit-item');
         
-        categories.forEach(cat => {
-            let catScore = 0;
-            let catItems = [];
-            const radios = this.querySelectorAll(`input[name^="score_${cat}"]:checked`);
+        for (let itemDiv of auditItemsDivs) {
+            const kategori = itemDiv.getAttribute('data-kategori');
+            const pertanyaan = itemDiv.querySelector('.item-desc strong').innerText;
+            const checkedRadio = itemDiv.querySelector('input[type="radio"]:checked');
             
-            radios.forEach(r => {
-                catScore += parseInt(r.value);
-                catItems.push(r.closest('.audit-item').querySelector('.item-desc').innerText);
-            });
-            
-            payload[`nilai${cat}`] = catScore;
-            payload[`item${cat}`] = catItems.join(" | ");
-            payload[`bukti${cat}`] = "Foto Terlampir"; 
-            payload.total += catScore;
-        });
+            if (checkedRadio) {
+                const nilai = parseInt(checkedRadio.value);
+                const fileInput = itemDiv.querySelector('.file-input');
+                let fileData = { base64: null, mimeType: null, fileName: null };
 
-        // Kirim ke Google Apps Script via api.js
+                // Jika user mengupload foto, proses ke Base64
+                if (fileInput.files.length > 0) {
+                    try {
+                        fileData = await fileToBase64(fileInput.files[0]);
+                    } catch (error) {
+                        console.error("Gagal membaca foto:", error);
+                    }
+                }
+
+                payload.items.push({
+                    kategori: kategori,
+                    pertanyaan: pertanyaan.replace(/^\d+\.\s*/, ''), // Menghilangkan angka urutan
+                    nilai: nilai,
+                    buktiBase64: fileData.base64,
+                    mimeType: fileData.mimeType,
+                    fileName: payload.codeArea + "_" + kategori + "_" + Date.now() + ".jpg" // Nama file aman
+                });
+            }
+        }
+
         const res = await saveAuditData(payload); 
         
         if(res.status === 'success') {
-            alert("Sukses! Data telah tersimpan di Sheet Scoring dengan total nilai: " + payload.total);
+            alert("Sukses! Data dan Foto telah tersimpan di sistem.");
             window.location.reload();
         } else {
-            alert("Gagal menyimpan data. Pastikan koneksi internet stabil.");
+            alert("Gagal: " + res.message);
             btn.disabled = false;
-            btn.querySelector('span').innerText = "Kirim Hasil Audit";
+            btn.querySelector('span').innerText = "Kirim Hasil & Upload Foto";
         }
     });
 }
@@ -304,56 +309,34 @@ async function renderAuditForm(container, user) {
 // 4. FUNGSI RENDER HALAMAN SCORING (RANKING)
 // ==========================================
 async function renderScoringPage(container) {
-    container.innerHTML = `
-        <div class="content-placeholder">
-            <div class="glow-icon" style="animation: pulse 1s infinite">📊</div>
-            <h2>Menghitung Peringkat...</h2>
-            <p>Menganalisis data dari database.</p>
-        </div>
-    `;
+    container.innerHTML = `<div class="content-placeholder"><div class="glow-icon" style="animation: pulse 1s infinite">📊</div><h2>Menghitung Peringkat...</h2></div>`;
 
     const response = await getScoringRanking();
-    
     if (response.status !== 'success') {
         container.innerHTML = `<div class="content-placeholder"><div class="glow-icon" style="color: #EF4444;">⚠️</div><h2>Gagal Memuat</h2></div>`;
         return;
     }
 
     let rawData = response.data;
-
     if(rawData.length === 0) {
-        container.innerHTML = `<div class="content-placeholder"><div class="glow-icon" style="filter: grayscale(1);">📝</div><h2>Belum Ada Data Audit</h2></div>`;
+        container.innerHTML = `<div class="content-placeholder"><h2>Belum Ada Data Audit</h2></div>`;
         return;
     }
 
-    // Urutkan ranking
     rawData.sort((a, b) => b.totalSkor - a.totalSkor);
 
     let html = `
         <div class="scoring-dashboard">
-            <div class="scoring-header">
-                <h2>Area Leaderboard</h2>
-                <p>Klik pada area untuk melihat rincian nilai 6S.</p>
-            </div>
-
-            <div class="score-legend" style="flex-direction: row; flex-wrap: wrap; justify-content: center; margin-bottom: 32px;">
-                <div class="legend-item"><span class="l-dot" style="background:#10B981"></span> GOOD (85 - 100)</div>
-                <div class="legend-item"><span class="l-dot" style="background:#F59E0B"></span> WARNING (51 - 84)</div>
-                <div class="legend-item"><span class="l-dot" style="background:#EF4444"></span> PROBLEM (0 - 50)</div>
-            </div>
-
+            <div class="scoring-header"><h2>Area Leaderboard</h2></div>
             <div class="ranking-list">
     `;
 
     rawData.forEach((item, index) => {
         const score = parseInt(item.totalSkor) || 0;
-        let statusText = score >= 85 ? "GOOD" : score >= 51 ? "WARNING" : "PROBLEM";
         let statusClass = score >= 85 ? "stat-good" : score >= 51 ? "stat-warning" : "stat-problem";
+        let statusText = score >= 85 ? "GOOD" : score >= 51 ? "WARNING" : "PROBLEM";
+        let tglFormat = new Date(item.tglAudit).toLocaleDateString('id-ID');
 
-        let tglFormat = new Date(item.tglAudit).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' });
-        if(tglFormat === 'Invalid Date') tglFormat = item.tglAudit;
-
-        // Tambahkan atribut data-index untuk memanggil detail nanti
         html += `
             <div class="ranking-card" data-index="${index}">
                 <div class="rank-number">#${index + 1}</div>
@@ -372,58 +355,173 @@ async function renderScoringPage(container) {
     html += `</div></div>`;
     container.innerHTML = html;
 
-    // --- LOGIKA KLIK POP-UP DETAIL ---
+    // Logika Pop-Up Modal dengan Link Foto
     const cards = container.querySelectorAll('.ranking-card');
     const modal = document.getElementById('detailModal');
     const btnClose = document.getElementById('closeModal');
 
-    // Menutup Modal saat tombol silang atau area luar diklik
     const closeModal = () => modal.classList.remove('active');
     if(btnClose) btnClose.addEventListener('click', closeModal);
-    window.addEventListener('click', (e) => { if (e.target === modal) closeModal(); });
 
-    // Membuka Modal
     cards.forEach(card => {
         card.addEventListener('click', () => {
             const index = card.getAttribute('data-index');
             const data = rawData[index];
             
-            // Format Header Pop-Up
-            let tglFormat = new Date(data.tglAudit).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' });
-            if(tglFormat === 'Invalid Date') tglFormat = data.tglAudit;
-
-            document.getElementById('modalAreaName').innerText = `${data.namaArea} (${data.codeArea})`;
-            document.getElementById('modalAuditMeta').innerText = `Tgl: ${tglFormat} | Auditor: ${data.auditor}`;
+            document.getElementById('modalAreaName').innerText = `${data.namaArea}`;
+            document.getElementById('modalAuditMeta').innerText = `Auditor: ${data.auditor}`;
             document.getElementById('modalTotalScore').innerText = data.totalSkor;
 
-            // Membangun Rincian (Membelah item yang digabung " | " menjadi daftar peluru)
             let detailHtml = '<div class="detail-grid">';
             const categories = ["Ringkas", "Rapi", "Resik", "Rawat", "Rajin", "Safety"];
 
             categories.forEach(cat => {
                 const catData = data.detail[cat];
-                let itemScore = catData.nilai || 0;
-                
-                // Ubah teks yang digabung menjadi list HTML
-                let itemsText = catData.item ? catData.item : "Tidak ada pertanyaan diisi.";
-                let listHtml = itemsText.split(' | ').map(i => `<li>${i}</li>`).join('');
+                if(catData && catData.items.length > 0) {
+                    let itemsListHtml = catData.items.map(i => {
+                        // Jika ada link foto, buat tombol Lihat Bukti
+                        let linkFoto = (i.buktiUrl && i.buktiUrl.includes("http")) 
+                            ? `<a href="${i.buktiUrl}" target="_blank" style="color:#4F46E5; font-size:10px; margin-left:8px; text-decoration:underline;">[Lihat Bukti]</a>` 
+                            : '';
+                        return `<li>${i.pertanyaan} <strong>(${i.nilai} point)</strong> ${linkFoto}</li>`;
+                    }).join('');
 
-                detailHtml += `
-                    <div class="detail-cat-card">
-                        <div class="cat-header">
-                            <h4>${cat}</h4>
-                            <span class="cat-score">${itemScore} Pts</span>
+                    detailHtml += `
+                        <div class="detail-cat-card">
+                            <div class="cat-header">
+                                <h4>${cat}</h4><span class="cat-score">${catData.totalKategori} Point</span>
+                            </div>
+                            <ul class="cat-items">${itemsListHtml}</ul>
                         </div>
-                        <ul class="cat-items">${listHtml}</ul>
-                    </div>
-                `;
+                    `;
+                }
             });
-            detailHtml += '</div>';
             
-            document.getElementById('modalDetails').innerHTML = detailHtml;
-            
-            // Tampilkan Modal
+            document.getElementById('modalDetails').innerHTML = detailHtml + '</div>';
             modal.classList.add('active');
         });
     });
 }
+
+// ==========================================
+// 5. FUNGSI RENDER MASTER OUTDOOR MAP
+// ==========================================
+async function renderMasterMap(container) {
+    container.innerHTML = `<div class="content-placeholder"><div class="glow-icon" style="animation: pulse 1s infinite">🗺️</div><h2>Memuat Layout Pabrik...</h2></div>`;
+
+    // Ambil data dari GAS
+    const response = await getMasterMapData(); // Pastikan fungsi ini ada di api.js
+    const mapUrl = (response.status === 'success' && response.url) ? response.url : "";
+    const lastUpdate = response.tanggal || "-";
+
+    let html = `
+        <div class="map-page-container">
+            <div class="map-controls-top">
+                <div class="map-info">
+                    <p style="font-size: 11px; color: var(--text-muted); margin:0;">Pembaruan Terakhir:</p>
+                    <strong style="font-size: 13px;">${lastUpdate}</strong>
+                </div>
+                <div class="map-actions">
+                    <input type="file" id="uploadMapInput" accept="image/*" style="display:none">
+                    <button onclick="document.getElementById('uploadMapInput').click()" class="btn-web3" style="padding: 8px 16px; font-size: 12px;">
+                        <span>Upload Layout Baru</span>
+                    </button>
+                </div>
+            </div>
+
+            <div class="map-viewer-wrapper">
+                ${mapUrl ? `
+                    <div class="map-zoom-container" id="mapZoomContainer">
+                        <img src="${mapUrl.replace('open?', 'uc?export=view&')}" id="factoryMap" alt="Layout Pabrik">
+                    </div>
+                    <div class="zoom-buttons">
+                        <button id="btnZoomIn">+</button>
+                        <button id="btnZoomReset">↺</button>
+                        <button id="btnZoomOut">−</button>
+                    </div>
+                ` : `
+                    <div class="content-placeholder" style="height: 300px;">
+                        <p>Belum ada layout map yang diunggah.</p>
+                    </div>
+                `}
+            </div>
+        </div>
+    `;
+
+    container.innerHTML = html;
+
+    // Logika Upload Map Baru
+    const uploadInput = document.getElementById('uploadMapInput');
+    if(uploadInput) {
+        uploadInput.addEventListener('change', async function() {
+            if (!this.files[0]) return;
+            const confirmUpload = confirm("Apakah Anda yakin ingin memperbarui Layout Pabrik?");
+            if(!confirmUpload) return;
+
+            const btn = document.querySelector('.map-actions .btn-web3');
+            btn.disabled = true;
+            btn.querySelector('span').innerText = "Sedang Mengupload...";
+
+            const fileData = await fileToBase64(this.files[0]);
+            const payload = {
+                action: "uploadMasterMap",
+                tglUpdate: new Date().toLocaleDateString('id-ID', {day:'numeric', month:'long', year:'numeric'}),
+                buktiBase64: fileData.base64,
+                mimeType: fileData.mimeType
+            };
+
+            const res = await saveMasterMapData(payload); // Fungsi di api.js
+            if(res.status === 'success') {
+                alert("Layout Pabrik Berhasil Diperbarui!");
+                renderMasterMap(container);
+            } else {
+                alert("Gagal upload: " + res.message);
+                btn.disabled = false;
+                btn.querySelector('span').innerText = "Upload Layout Baru";
+            }
+        });
+    }
+
+    // Logika Zoom & Pan Sederhana
+    const mapImg = document.getElementById('factoryMap');
+    if (mapImg) {
+        let scale = 1;
+        const btnIn = document.getElementById('btnZoomIn');
+        const btnOut = document.getElementById('btnZoomOut');
+        const btnReset = document.getElementById('btnZoomReset');
+
+        btnIn.onclick = () => { scale += 0.2; applyZoom(); };
+        btnOut.onclick = () => { if(scale > 0.5) scale -= 0.2; applyZoom(); };
+        btnReset.onclick = () => { scale = 1; applyZoom(); };
+
+        function applyZoom() {
+            mapImg.style.transform = `scale(${scale})`;
+        }
+
+        // Aktifkan geser (pan) dengan sentuhan/mouse
+        let isDragging = false;
+        let startX, startY, scrollLeft, scrollTop;
+        const wrapper = document.querySelector('.map-viewer-wrapper');
+
+        wrapper.addEventListener('mousedown', (e) => {
+            isDragging = true;
+            startX = e.pageX - wrapper.offsetLeft;
+            startY = e.pageY - wrapper.offsetTop;
+            scrollLeft = wrapper.scrollLeft;
+            scrollTop = wrapper.scrollTop;
+        });
+        wrapper.addEventListener('mouseleave', () => isDragging = false);
+        wrapper.addEventListener('mouseup', () => isDragging = false);
+        wrapper.addEventListener('mousemove', (e) => {
+            if (!isDragging) return;
+            e.preventDefault();
+            const x = e.pageX - wrapper.offsetLeft;
+            const y = e.pageY - wrapper.offsetTop;
+            const walkX = (x - startX) * 2;
+            const walkY = (y - startY) * 2;
+            wrapper.scrollLeft = scrollLeft - walkX;
+            wrapper.scrollTop = scrollTop - walkY;
+        });
+    }
+}
+
