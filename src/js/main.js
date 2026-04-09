@@ -163,7 +163,6 @@ function fileToBase64(file) {
 // ==========================================
 async function renderAuditForm(container, user) {
     const today = new Date().toISOString().split('T')[0];
-    
     container.innerHTML = `<div class="content-placeholder"><div class="glow-icon" style="animation: pulse 1s infinite">⏳</div><h2>Mengunduh Data...</h2></div>`;
 
     const response = await getChecklistItems();
@@ -173,12 +172,14 @@ async function renderAuditForm(container, user) {
     }
 
     const categoriesData = response.data;
+    
+    // Legend diperbarui ke format 0 - 5
     const legendHtml = `
         <div class="score-legend">
-            <strong>Ketentuan Skor:</strong>
-            <div class="legend-item"><span class="l-dot" style="background:#EF4444"></span> 0 : Perlu Perbaikan (temuan >3)</div>
-            <div class="legend-item"><span class="l-dot" style="background:#F59E0B"></span> 3 : Perawatan (temuan 1)</div>
-            <div class="legend-item"><span class="l-dot" style="background:#10B981"></span> 5 : Excellence (0 temuan)</div>
+            <strong>Ketentuan Skor (Geser Slider):</strong>
+            <div class="legend-item"><span class="l-dot" style="background:#EF4444"></span> 0 - 1 : Perlu Perbaikan</div>
+            <div class="legend-item"><span class="l-dot" style="background:#F59E0B"></span> 2 - 3 : Perawatan</div>
+            <div class="legend-item"><span class="l-dot" style="background:#10B981"></span> 4 - 5 : Excellence</div>
         </div>
     `;
 
@@ -204,6 +205,7 @@ async function renderAuditForm(container, user) {
                 const inputName = `score_${cat}_${index}`;
                 const fileId = `photo_${cat}_${index}`;
                 
+                // HTML Slider menggantikan Radio Button
                 html += `
                     <div class="audit-item" data-kategori="${cat}">
                         <div class="item-content">
@@ -215,10 +217,11 @@ async function renderAuditForm(container, user) {
                                 <span class="file-name" id="name_${fileId}">Belum ada bukti</span>
                             </div>
                         </div>
-                        <div class="scoring-group">
-                            <label class="score-radio s-0"><input type="radio" name="${inputName}" value="0" required> <span>0</span></label>
-                            <label class="score-radio s-3"><input type="radio" name="${inputName}" value="3"> <span>3</span></label>
-                            <label class="score-radio s-5"><input type="radio" name="${inputName}" value="5"> <span>5</span></label>
+                        <div class="scoring-slider-group">
+                            <span class="slider-label">0</span>
+                            <input type="range" name="${inputName}" min="0" max="5" value="0" class="score-slider" id="slider_${inputName}">
+                            <span class="slider-label">5</span>
+                            <div class="slider-value-display val-bad" id="val_${inputName}">0</div>
                         </div>
                     </div>
                 `;
@@ -227,10 +230,10 @@ async function renderAuditForm(container, user) {
         }
     });
 
-    html += `</div><button type="submit" class="btn-web3 submit-audit"><span>Kirim Hasil & Upload Foto</span></button></form>`;
+    html += `</div><button type="submit" class="btn-web3 submit-audit"><span>Kirim Hasil Audit</span></button></form>`;
     container.innerHTML = html;
 
-    // Interaksi UI Foto
+    // --- INTERAKSI FOTO ---
     document.querySelectorAll('.file-input').forEach(input => {
         input.addEventListener('change', function(e) {
             const fileNameSpan = document.getElementById(`name_${this.id}`);
@@ -244,7 +247,24 @@ async function renderAuditForm(container, user) {
         });
     });
 
-    // Logika Pengiriman Data (Struktur Vertikal)
+    // --- INTERAKSI REAL-TIME SLIDER ---
+    document.querySelectorAll('.score-slider').forEach(slider => {
+        slider.addEventListener('input', function() {
+            // Memperbarui angka di kotak sebelah kanan
+            const displayId = `val_${this.id.replace('slider_', '')}`;
+            const displayEl = document.getElementById(displayId);
+            const val = parseInt(this.value);
+            
+            displayEl.innerText = val;
+            
+            // Merubah warna kotak berdasarkan nilai
+            if (val <= 1) displayEl.className = 'slider-value-display val-bad'; // Merah
+            else if (val <= 3) displayEl.className = 'slider-value-display val-warn'; // Kuning
+            else displayEl.className = 'slider-value-display val-good'; // Hijau
+        });
+    });
+
+    // --- LOGIKA PENGIRIMAN DATA ---
     document.getElementById('auditForm').addEventListener('submit', async function(e) {
         e.preventDefault();
         const btn = this.querySelector('.submit-audit');
@@ -257,7 +277,7 @@ async function renderAuditForm(container, user) {
             namaAuditor: document.getElementById('namaAuditor').value,
             namaArea: document.getElementById('namaArea').value,
             codeArea: document.getElementById('codeArea').value,
-            items: [] // Ini akan berisi array per pertanyaan
+            items: [] 
         };
 
         const auditItemsDivs = this.querySelectorAll('.audit-item');
@@ -265,14 +285,15 @@ async function renderAuditForm(container, user) {
         for (let itemDiv of auditItemsDivs) {
             const kategori = itemDiv.getAttribute('data-kategori');
             const pertanyaan = itemDiv.querySelector('.item-desc strong').innerText;
-            const checkedRadio = itemDiv.querySelector('input[type="radio"]:checked');
             
-            if (checkedRadio) {
-                const nilai = parseInt(checkedRadio.value);
+            // Mengambil nilai dari Slider, bukan Radio Button lagi
+            const sliderInput = itemDiv.querySelector('.score-slider');
+            
+            if (sliderInput) {
+                const nilai = parseInt(sliderInput.value);
                 const fileInput = itemDiv.querySelector('.file-input');
                 let fileData = { base64: null, mimeType: null, fileName: null };
 
-                // Jika user mengupload foto, proses ke Base64
                 if (fileInput.files.length > 0) {
                     try {
                         fileData = await fileToBase64(fileInput.files[0]);
@@ -283,11 +304,11 @@ async function renderAuditForm(container, user) {
 
                 payload.items.push({
                     kategori: kategori,
-                    pertanyaan: pertanyaan.replace(/^\d+\.\s*/, ''), // Menghilangkan angka urutan
+                    pertanyaan: pertanyaan.replace(/^\d+\.\s*/, ''), 
                     nilai: nilai,
                     buktiBase64: fileData.base64,
                     mimeType: fileData.mimeType,
-                    fileName: payload.codeArea + "_" + kategori + "_" + Date.now() + ".jpg" // Nama file aman
+                    fileName: payload.codeArea + "_" + kategori + "_" + Date.now() + ".jpg" 
                 });
             }
         }
@@ -410,38 +431,54 @@ async function renderMasterMap(container) {
     container.innerHTML = `<div class="content-placeholder"><div class="glow-icon" style="animation: pulse 1s infinite">🗺️</div><h2>Memuat Layout Pabrik...</h2></div>`;
 
     // Ambil data dari GAS
-    const response = await getMasterMapData(); // Pastikan fungsi ini ada di api.js
+    const response = await getMasterMapData();
     const mapUrl = (response.status === 'success' && response.url) ? response.url : "";
     const lastUpdate = response.tanggal || "-";
+
+// --- TRIK: MENGUBAH URL DRIVE MENJADI DIRECT IMAGE LINK ---
+    let displayUrl = "";
+    if (mapUrl) {
+        // Mencari ID unik file menggunakan Regex yang lebih kuat
+        const match = mapUrl.match(/[-\w]{25,}/);
+        if (match && match[0]) {
+            // Memaksa Google memberikan gambar mentah resolusi tinggi (Width: 2000px)
+            displayUrl = `https://drive.google.com/thumbnail?id=${match[0]}&sz=w2000`;
+        } else {
+            displayUrl = mapUrl;
+        }
+    }
 
     let html = `
         <div class="map-page-container">
             <div class="map-controls-top">
                 <div class="map-info">
-                    <p style="font-size: 11px; color: var(--text-muted); margin:0;">Pembaruan Terakhir:</p>
-                    <strong style="font-size: 13px;">${lastUpdate}</strong>
+                    <p class="map-info-label">Pembaruan Terakhir:</p>
+                    <strong class="map-info-date">${lastUpdate}</strong>
                 </div>
                 <div class="map-actions">
                     <input type="file" id="uploadMapInput" accept="image/*" style="display:none">
-                    <button onclick="document.getElementById('uploadMapInput').click()" class="btn-web3" style="padding: 8px 16px; font-size: 12px;">
+                    <button onclick="document.getElementById('uploadMapInput').click()" class="btn-web3 map-btn">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="17 8 12 3 7 8"></polyline><line x1="12" y1="3" x2="12" y2="15"></line></svg>
                         <span>Upload Layout Baru</span>
                     </button>
                 </div>
             </div>
 
             <div class="map-viewer-wrapper">
-                ${mapUrl ? `
+                ${displayUrl ? `
                     <div class="map-zoom-container" id="mapZoomContainer">
-                        <img src="${mapUrl.replace('open?', 'uc?export=view&')}" id="factoryMap" alt="Layout Pabrik">
+                        <img src="${displayUrl}" id="factoryMap" alt="Layout Pabrik" onerror="this.src='https://via.placeholder.com/800x400?text=Gagal+Memuat+Gambar+Google+Drive'">
                     </div>
                     <div class="zoom-buttons">
-                        <button id="btnZoomIn">+</button>
-                        <button id="btnZoomReset">↺</button>
-                        <button id="btnZoomOut">−</button>
+                        <button id="btnZoomIn" title="Perbesar">+</button>
+                        <button id="btnZoomReset" title="Reset">↺</button>
+                        <button id="btnZoomOut" title="Perkecil">−</button>
                     </div>
                 ` : `
                     <div class="content-placeholder" style="height: 300px;">
-                        <p>Belum ada layout map yang diunggah.</p>
+                        <div class="glow-icon" style="filter: grayscale(1);">🖼️</div>
+                        <h2>Belum Ada Layout</h2>
+                        <p>Silakan upload gambar Master Outdoor Map terbaru.</p>
                     </div>
                 `}
             </div>
@@ -460,7 +497,7 @@ async function renderMasterMap(container) {
 
             const btn = document.querySelector('.map-actions .btn-web3');
             btn.disabled = true;
-            btn.querySelector('span').innerText = "Sedang Mengupload...";
+            btn.querySelector('span').innerText = "Mengupload...";
 
             const fileData = await fileToBase64(this.files[0]);
             const payload = {
@@ -470,7 +507,7 @@ async function renderMasterMap(container) {
                 mimeType: fileData.mimeType
             };
 
-            const res = await saveMasterMapData(payload); // Fungsi di api.js
+            const res = await saveMasterMapData(payload);
             if(res.status === 'success') {
                 alert("Layout Pabrik Berhasil Diperbarui!");
                 renderMasterMap(container);
@@ -482,7 +519,7 @@ async function renderMasterMap(container) {
         });
     }
 
-    // Logika Zoom & Pan Sederhana
+    // Logika Zoom & Pan
     const mapImg = document.getElementById('factoryMap');
     if (mapImg) {
         let scale = 1;
@@ -498,7 +535,6 @@ async function renderMasterMap(container) {
             mapImg.style.transform = `scale(${scale})`;
         }
 
-        // Aktifkan geser (pan) dengan sentuhan/mouse
         let isDragging = false;
         let startX, startY, scrollLeft, scrollTop;
         const wrapper = document.querySelector('.map-viewer-wrapper');
@@ -509,9 +545,10 @@ async function renderMasterMap(container) {
             startY = e.pageY - wrapper.offsetTop;
             scrollLeft = wrapper.scrollLeft;
             scrollTop = wrapper.scrollTop;
+            wrapper.style.cursor = 'grabbing';
         });
-        wrapper.addEventListener('mouseleave', () => isDragging = false);
-        wrapper.addEventListener('mouseup', () => isDragging = false);
+        wrapper.addEventListener('mouseleave', () => { isDragging = false; wrapper.style.cursor = 'grab'; });
+        wrapper.addEventListener('mouseup', () => { isDragging = false; wrapper.style.cursor = 'grab'; });
         wrapper.addEventListener('mousemove', (e) => {
             if (!isDragging) return;
             e.preventDefault();
@@ -524,4 +561,3 @@ async function renderMasterMap(container) {
         });
     }
 }
-
