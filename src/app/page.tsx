@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { loginUser } from '../../lib/api'; 
+import { loginUser } from '../lib/api'; 
 
 export default function LoginPage() {
     // Menggantikan document.getElementById dengan React State
