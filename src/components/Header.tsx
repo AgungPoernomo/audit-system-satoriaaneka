@@ -10,7 +10,7 @@ export default function Header({ toggleSidebar }: { toggleSidebar: () => void })
 
     if (pathname === '/audit-checklist') {
         title = "Audit Checklist";
-        subtitle = "Pilih Jenis Audit & Lakukan Penilaian";
+        subtitle = "Pilih Jenis Audit & Lakukan Penilaian Aktual!";
     } else if (pathname === '/scoring') {
         title = "Scorring (Leaderboard)";
         subtitle = "Peringkat Area Berdasarkan Nilai Audit";

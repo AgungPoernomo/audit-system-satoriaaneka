@@ -29,6 +29,19 @@ export default function ScoringPage() {
         }
     }, [activeView, scoringData]);
 
+    if (activeView === 'indoor') {
+        return (
+            <div className="content-placeholder">
+                <div className="glow-icon">🚧</div>
+                <h2>Segera Hadir</h2>
+                <p>Scorring audit ini sedang dalam tahap pengembangan.</p>
+                <button onClick={() => setActiveView('menu')} className="btn-web3" style={{ width: 'auto', padding: '12px 24px', marginTop: '20px' }}>
+                    <span>Kembali ke Pilihan Audit</span>
+                </button>
+            </div>
+        );
+    }
+
     const openModal = (data: any) => {
         setSelectedData(data);
         setIsModalOpen(true);
