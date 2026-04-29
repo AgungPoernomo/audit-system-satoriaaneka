@@ -1,18 +1,50 @@
 'use client'; 
 
 import { useState, useEffect } from 'react';
-import { usePathname } from 'next/navigation'; // Tambahkan alat pendeteksi URL
+import { usePathname, useRouter } from 'next/navigation'; // Tambahkan useRouter
 import Sidebar from '../../components/Sidebar';
 import Header from '../../components/Header';
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
     const [isSidebarOpen, setIsSidebarOpen] = useState(false);
-    const pathname = usePathname(); // Membaca URL saat ini
+    
+    // State baru untuk menahan tampilan UI sebelum pengecekan tiket selesai
+    const [isAuthChecking, setIsAuthChecking] = useState(true); 
+    
+    const pathname = usePathname(); 
+    const router = useRouter(); // Alat untuk melempar/memindah halaman
 
-    // EFEK AJAIB: Tutup sidebar secara otomatis setiap kali URL (pathname) berubah
+    // ==========================================
+    // 1. EFEK PENJAGA PINTU (Auth Guard)
+    // ==========================================
+    useEffect(() => {
+        const userSession = sessionStorage.getItem('userLogin');
+        
+        if (!userSession) {
+            // Jika TIDAK ADA tiket sesi, langsung tendang ke /login
+            router.push('/login');
+        } else {
+            // Jika tiket ada, izinkan masuk (matikan penahan UI)
+            setIsAuthChecking(false);
+        }
+    }, [router]);
+
+    // ==========================================
+    // 2. EFEK AJAIB: Tutup sidebar otomatis
+    // ==========================================
     useEffect(() => {
         setIsSidebarOpen(false);
     }, [pathname]);
+
+    // Jika masih dalam proses pengecekan tiket, jangan render Dashboard (mencegah bocor/kedipan)
+    if (isAuthChecking) {
+        return (
+            <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh', background: '#0B0F19', color: '#10B981', flexDirection: 'column' }}>
+                <div className="glow-icon" style={{ animation: 'pulse 1s infinite', marginBottom: '10px' }}>🔐</div>
+                <h3>Memverifikasi Akses...</h3>
+            </div>
+        );
+    }
 
     return (
         <>
