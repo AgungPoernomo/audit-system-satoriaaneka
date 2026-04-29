@@ -21,8 +21,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         const userSession = sessionStorage.getItem('userLogin');
         
         if (!userSession) {
-            // Jika TIDAK ADA tiket sesi, langsung tendang ke /login
-            router.push('/login');
+            router.push('/');
         } else {
             // Jika tiket ada, izinkan masuk (matikan penahan UI)
             setIsAuthChecking(false);
@@ -39,9 +38,10 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
     // Jika masih dalam proses pengecekan tiket, jangan render Dashboard (mencegah bocor/kedipan)
     if (isAuthChecking) {
         return (
-            <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh', background: '#0B0F19', color: '#10B981', flexDirection: 'column' }}>
-                <div className="glow-icon" style={{ animation: 'pulse 1s infinite', marginBottom: '10px' }}>🔐</div>
-                <h3>Memverifikasi Akses...</h3>
+            <div className="web3-bg">
+                <div className="blob blob-1"></div>
+                <div className="blob blob-2"></div>
+                <div className="blob blob-3"></div>
             </div>
         );
     }
