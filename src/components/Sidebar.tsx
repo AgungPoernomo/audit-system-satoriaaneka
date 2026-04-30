@@ -18,7 +18,7 @@ export default function Sidebar({ isOpen }: { isOpen?: boolean }) {
 
     const handleLogout = () => {
         sessionStorage.removeItem('userLogin');
-        router.push('/login');
+        router.push('/');
     };
 
     return (

@@ -1,34 +1,38 @@
-'use client'; // Wajib untuk halaman yang memiliki interaksi (form, tombol, state)
+'use client'; 
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { loginUser } from '../lib/api';
+import { loginUser } from '../lib/api'; 
 
 export default function LoginPage() {
-    // Menggantikan document.getElementById dengan React State
     const [username, setUsername] = useState('');
     const [password, setPassword] = useState('');
     const [isLoading, setIsLoading] = useState(false);
     const [errorMsg, setErrorMsg] = useState('');
+    const [isCheckingSession, setIsCheckingSession] = useState(true);
     
-    // Alat pemindah halaman bawaan Next.js
     const router = useRouter();
 
-    // Fungsi yang dipanggil saat tombol submit ditekan
+    // Cek apakah user SUDAH login. Jika sudah, langsung lempar ke /dashboard
+    useEffect(() => {
+        const userSession = sessionStorage.getItem('userLogin');
+        if (userSession) {
+            router.push('/dashboard');
+        } else {
+            setIsCheckingSession(false);
+        }
+    }, [router]);
+
     const handleLogin = async (e: React.FormEvent) => {
-        e.preventDefault(); // Mencegah browser reload
+        e.preventDefault(); 
         setIsLoading(true);
-        setErrorMsg(''); // Kosongkan error sebelumnya
+        setErrorMsg(''); 
 
         try {
             const response = await loginUser(username, password);
-
             if (response.status === 'success') {
-                // Simpan data ke session (persis seperti Vanilla JS lama Anda)
                 sessionStorage.setItem('userLogin', JSON.stringify(response.data));
-                
-                // Pindah ke halaman Dashboard ("/")
-                router.push('/'); 
+                router.push('/dashboard'); // Lempar ke Dashboard
             } else {
                 setErrorMsg(response.message || 'ID atau Sandi salah');
             }
@@ -39,9 +43,13 @@ export default function LoginPage() {
         }
     };
 
+    // Tahan tampilan sebentar saat mengecek memori agar tidak berkedip
+    if (isCheckingSession) {
+        return <div className="web3-bg"><div className="blob blob-1"></div><div className="blob blob-2"></div></div>;
+    }
+
     return (
         <div className="login-layout">
-            {/* Background Web3 Animasi khusus halaman Login */}
             <div className="web3-bg">
                 <div className="blob blob-1"></div>
                 <div className="blob blob-2"></div>
@@ -50,57 +58,21 @@ export default function LoginPage() {
 
             <div className="login-box glass-panel">
                 <div className="login-header">
-                    <img 
-                        src="/logo-satoria.png" 
-                        alt="Logo Satoria" 
-                        className="login-logo" 
-                        style={{ marginBottom: '24px', maxWidth: '200px', height: 'auto' }}
-                    />
+                    <img src="/logo-satoria.png" alt="Logo Satoria" className="login-logo" style={{ marginBottom: '24px', maxWidth: '200px', height: 'auto' }} />
                     <h1 className="title" style={{ fontSize: '24px' }}>AUDIT <span className="gradient-text">SYSTEM</span></h1>
                     <p className="subtitle">Login untuk Melanjutkan</p>
                 </div>
 
-                {/* Tempat munculnya pesan error jika gagal login */}
                 {errorMsg && (
-                    <div style={{ 
-                        color: '#EF4444', 
-                        background: 'rgba(239, 68, 68, 0.1)', 
-                        padding: '10px', 
-                        borderRadius: '8px',
-                        marginBottom: '20px', 
-                        fontSize: '14px', 
-                        fontWeight: 600 
-                    }}>
+                    <div style={{ color: '#EF4444', background: 'rgba(239, 68, 68, 0.1)', padding: '10px', borderRadius: '8px', marginBottom: '20px', fontSize: '14px', fontWeight: 600 }}>
                         ⚠️ {errorMsg}
                     </div>
                 )}
 
                 <form onSubmit={handleLogin} className="login-form">
-                    <div className="input-group">
-                        <input 
-                            type="text" 
-                            placeholder="Username" 
-                            value={username}
-                            onChange={(e) => setUsername(e.target.value)}
-                            required 
-                        />
-                        <div className="input-glow"></div>
-                    </div>
-                    
-                    <div className="input-group">
-                        <input 
-                            type="password" 
-                            placeholder="Password" 
-                            value={password}
-                            onChange={(e) => setPassword(e.target.value)}
-                            required 
-                        />
-                        <div className="input-glow"></div>
-                    </div>
-
-                    <button type="submit" className="btn-web3" disabled={isLoading}>
-                        <span>{isLoading ? 'Memverifikasi...' : 'Masuk Sistem'}</span>
-                    </button>
+                    <div className="input-group"><input type="text" placeholder="Username" value={username} onChange={(e) => setUsername(e.target.value)} required /><div className="input-glow"></div></div>
+                    <div className="input-group"><input type="password" placeholder="Password" value={password} onChange={(e) => setPassword(e.target.value)} required /><div className="input-glow"></div></div>
+                    <button type="submit" className="btn-web3" disabled={isLoading}><span>{isLoading ? 'Memverifikasi...' : 'Masuk Sistem'}</span></button>
                 </form>
             </div>
         </div>
